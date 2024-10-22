@@ -21,16 +21,24 @@ const ChatBot = () => {
   const handleSend = async () => {
     if (!input.trim() || isAnimating) return;
 
+    // Add user message to chat
     setMessages(prevMessages => [...prevMessages, { type: 'user', text: input }]);
 
     const isCanvasRequest = input.toLowerCase().includes('canvas');
     if (isCanvasRequest) setIsLoading(true);
 
+    // Prepare the prompt for the AI, including the edited content from the editor
+    const prompt = isCanvasRequest
+      ? `${input}\n\nCurrent canvas content:\n${editorContent[0].children[0].text}`
+      : input;
+
     try {
-      const response = await axios.post('http://localhost:5000/api/generate', { prompt: input });
+      // Fetch AI response
+      const response = await axios.post('http://localhost:5000/api/generate', { prompt });
       const aiText = response.data.text;
       setMessages(prevMessages => [...prevMessages, { type: 'ai', text: aiText }]);
 
+      // If "canvas" was requested, update the editor content and animate
       if (isCanvasRequest) {
         setShowEditor(true);
         await startTextAnimation(aiText);
@@ -95,8 +103,6 @@ const ChatBot = () => {
           <SendIcon />
         </IconButton>
       </div>
-
-      {/* Sliding Rich Text Editor */}
       <CSSTransition
         in={showEditor}
         timeout={300}
