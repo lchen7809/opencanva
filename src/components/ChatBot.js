@@ -14,37 +14,32 @@ const ChatBot = () => {
     { type: 'paragraph', children: [{ text: '' }] },
   ]);
   const [isLoading, setIsLoading] = useState(false);
-  const [isAnimating, setIsAnimating] = useState(false); // Animation lock
+  const [isAnimating, setIsAnimating] = useState(false);
   const nodeRef = useRef(null);
 
   // Handle sending messages
   const handleSend = async () => {
-    if (!input.trim() || isAnimating) return; // Prevent sending during animation
+    if (!input.trim() || isAnimating) return;
 
-    // Add user message to chat
     setMessages(prevMessages => [...prevMessages, { type: 'user', text: input }]);
 
     const isCanvasRequest = input.toLowerCase().includes('canvas');
     if (isCanvasRequest) setIsLoading(true);
 
     try {
-      // Fetch AI response
       const response = await axios.post('http://localhost:5000/api/generate', { prompt: input });
       const aiText = response.data.text;
-
-      // Add AI response to chat
       setMessages(prevMessages => [...prevMessages, { type: 'ai', text: aiText }]);
 
-      // If "canvas" was requested, update the editor content and animate
       if (isCanvasRequest) {
         setShowEditor(true);
-        await startTextAnimation(aiText); // Wait for animation to finish
+        await startTextAnimation(aiText);
       }
     } catch (error) {
       console.error('Error fetching AI response:', error);
     } finally {
       setIsLoading(false);
-      setIsAnimating(false); // Unlock animation
+      setIsAnimating(false);
     }
 
     setInput('');
@@ -52,7 +47,7 @@ const ChatBot = () => {
 
   // Start the word-by-word text animation
   const startTextAnimation = async (text) => {
-    setIsAnimating(true); // Lock animation
+    setIsAnimating(true);
     setEditorContent([{ type: 'paragraph', children: [{ text: '' }] }]);
 
     const words = text.split(' ');
@@ -64,21 +59,19 @@ const ChatBot = () => {
         currentText += (index === 0 ? '' : ' ') + words[index];
         setEditorContent([{ type: 'paragraph', children: [{ text: currentText }] }]);
         index++;
-        setTimeout(animateWord, 100); // Adjust speed as needed
+        setTimeout(animateWord, 100);
       } else {
-        // Final update to ensure the complete text is displayed
         setEditorContent([{ type: 'paragraph', children: [{ text }] }]);
-        setIsAnimating(false); // Unlock animation after completion
+        setIsAnimating(false);
       }
     };
 
-    // Start animation
     animateWord();
   };
 
   return (
-    <div className="chat-container">
-      <div className="chat-window">
+    <div className={`chat-container ${showEditor ? 'shrink' : ''}`}>
+      <div className={`chat-window ${showEditor ? 'shrink' : ''}`}>
         {messages.map((msg, index) => (
           <div
             key={index}
@@ -89,7 +82,7 @@ const ChatBot = () => {
         ))}
       </div>
 
-      <div className="chat-input">
+      <div className={`chat-input ${showEditor ? 'shrink' : ''}`}>
         <TextField
           fullWidth
           variant="outlined"
@@ -111,7 +104,7 @@ const ChatBot = () => {
         unmountOnExit
         nodeRef={nodeRef}
       >
-        <div className="sliding-editor" ref={nodeRef}>
+        <div className={`sliding-editor ${showEditor ? 'expand' : ''}`} ref={nodeRef}>
           <RichTextEditor
             content={editorContent}
             setContent={setEditorContent}
